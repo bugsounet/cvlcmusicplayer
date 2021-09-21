@@ -22,6 +22,7 @@
   },
   "homepage": "https://github.com/bugsounet/cvlcmusicplayer",
   "dependencies": {
+    "@bugsounet/cvlc": "^1.0.4",
     "electron-rebuild": "^1.10.1",
     "drivelist": "^9.2.4",
     "music-metadata": "^7.11.4",
