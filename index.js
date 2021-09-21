@@ -1,6 +1,6 @@
 const mm = require('music-metadata')
 var base64Img = require('base64-img')
-const USB = require('usb') // needed: sudo apt-get install build-essential libudev-dev
+const USB = require('usb')
 const Drives = require('drivelist')
 const cvlc = require("@bugsounet/cvlc")
 const path = require("path")
@@ -31,9 +31,12 @@ class PLAYER {
     this.init()
     this.forceStop = false
     this.EndWithNoCb = false
+    this.AutoDetectUSB= false
     this.FileExtensions = ['mp3','flac','wav', 'ogg', 'opus', 'm4a']
-    if (this.config.useUSB) this.USBAutoDetect()
-    console.log("[MUSIC] Music Player Loaded")
+    if (this.config.useUSB) this.AutoDetectUSB= true
+    this.USBAutoDetect()
+
+    console.log("[MUSIC] Music Player v" + require('./package.json').version + " Initialized...")
   }
 
   init () {
@@ -58,14 +61,14 @@ class PLAYER {
   }
 
   async start () {
-    if (this.config.useUSB) { // USB Key is already connected !
+    if (this.AutoDetectUSB) { // USB Key is already connected !
       await this.USBSearchDrive()
     }
     else await this.search(this.config.musicPath)
     if (this.audioList.length) {
-      log("Audio files Found:", this.audioList.length)
+      console.log("[MUSIC] Audio files Found:", this.audioList.length)
       if (this.config.autoStart) this.MusicPlayList()
-    } else log("No Audio files Found!")
+    } else console.log("[MUSIC] No Audio files Found!")
   }
 
   async USBSearchDrive () {
@@ -81,24 +84,29 @@ class PLAYER {
   }
 
   USBAutoDetect () {
-    USB.on('attach', (device) => {
-      log("USB Key Detected")
-      setTimeout(async () => {
-        this.audioList= []
-        await this.USBSearchDrive()
-        if (this.audioList.length) {
-          log("Audio files Found:", this.audioList.length)
-          if (this.config.autoStart) this.MusicPlayList()
-        }
-      }, 5000)
-    })
+    log("AutoDetect USB Key:" , this.AutoDetectUSB ? "On" : "Off")
+    USB.on('attach', () => { this.PlugInUSB() })
+    USB.on('detach', () => { this.PlugOutUSB() })
+  }
 
-    USB.on('detach', (device) => {
-      log("Warn: USB Key Released!")
-      this.destroyPlayer()
-      this.init()
-    })
-    console.log("[MUSIC] AutoDetect USB Key Activated")
+  PlugInUSB () {
+    if (!this.AutoDetectUSB) return
+    log("USB Key Detected")
+    setTimeout(async () => {
+      this.audioList= []
+      await this.USBSearchDrive()
+      if (this.audioList.length) {
+        console.log("[MUSIC] Audio files Found:", this.audioList.length)
+        if (this.config.autoStart) this.MusicPlayList()
+      } else console.log("[MUSIC] USB-KEY: No Audio files Found!")
+    }, 5000)
+  }
+
+  PlugOutUSB () {
+    if (!this.AutoDetectUSB) return
+    log("Warn: USB Key Released!")
+    this.destroyPlayer()
+    this.init()
   }
 
   search (Path) {
@@ -113,7 +121,7 @@ class PLAYER {
       var stat = fs.lstatSync(filename)
       if (stat.isDirectory()){
         if (this.config.checkSubDirectory) this.search(filename)
-      }else {
+      } else {
         var isValidFileExtension = this.checkValidFileExtension(filename)
         if (isValidFileExtension) {
           log("Found:", filename)
@@ -135,7 +143,7 @@ class PLAYER {
     await this.destroyPlayer()
     if (!this.audioList.length) {
       this.MusicPlayerStatus.idMax = 0
-      return console.log("[GA:Music] No Music to Read")
+      return console.log("[Music] No Music to Read")
     } else {
       this.MusicPlayerStatus.idMax = this.audioList.length-1
     }
@@ -170,11 +178,10 @@ class PLAYER {
       this.MusicPlayerStatus.duration= parseInt((metadata.format.duration).toFixed(0))
       this.MusicPlayerStatus.file= this.audioList[this.MusicPlayerStatus.id]
       this.MusicPlayerStatus.title= metadata.common.title ? metadata.common.title : path.basename(this.MusicPlayerStatus.file)
-      this.MusicPlayerStatus.artist= metadata.common.artist ? metadata.common.artist: "Unknow"
-      this.MusicPlayerStatus.date= metadata.common.date ? metadata.common.date : "Unknow"
+      this.MusicPlayerStatus.artist= metadata.common.artist ? metadata.common.artist: "-"
+      this.MusicPlayerStatus.date= metadata.common.date ? metadata.common.date : "-"
       this.MusicPlayerStatus.seed = Date.now()
       this.MusicPlayerStatus.format = metadata.format.codec
-      this.MusicPlayerStatus.current= null
 
       const cover = mm.selectCover(metadata.common.picture);
       if (cover) {
@@ -192,16 +199,16 @@ class PLAYER {
         this.MusicPlayerStatus.file,
         ()=> {
           this.MusicPlayerStatus.connected = true
-          log("Start playing:", this.MusicPlayerStatus.file)
+          log("Start playing:", path.basename(this.MusicPlayerStatus.file))
           this.realTimeInfo()
         },
         ()=> {
+          log("Music is now ended !")
+          clearInterval(this.MusicInterval)
           if ((this.MusicPlayerStatus.id > this.MusicPlayerStatus.idMax) || this.MusicPlayerStatus.id == null) {
             this.MusicPlayerStatus.connected = false
             this.send(this.MusicPlayerStatus)
           }
-          log("Music is now ended !")
-          clearInterval(this.MusicInterval)
           if (this.EndWithNoCb) {
             this.EndWithNoCb = false
             return
@@ -276,6 +283,7 @@ class PLAYER {
     this.forceStop = true
     if (EndWithNoCb) this.EndWithNoCb = true
     this.destroyPlayer()
+    log("Stop")
   }
   
   setNext () {
@@ -304,6 +312,7 @@ class PLAYER {
   }
 
   rebuild () {
+    log("Rebuild Database")
     this.setStop()
     this.init()
     this.start()
