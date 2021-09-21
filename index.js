@@ -23,7 +23,8 @@ class PLAYER {
       modulePath: "./",
       musicPath: "/home",
       checkSubDirectory: false,
-      autoStart: false
+      autoStart: false,
+      maxVolume: 256
     }
     this.config = Object.assign(this.default, this.config)
     this.sendSocketNotification = callback.sendSocketNotification
@@ -54,7 +55,8 @@ class PLAYER {
       seed: 0,
       cover: null,
       id: null,
-      idMax: 0
+      idMax: 0,
+      format: null
     }
     this.MusicInterval = null
     this.audioList= []
@@ -181,7 +183,8 @@ class PLAYER {
       this.MusicPlayerStatus.artist= metadata.common.artist ? metadata.common.artist: "-"
       this.MusicPlayerStatus.date= metadata.common.date ? metadata.common.date : "-"
       this.MusicPlayerStatus.seed = Date.now()
-      this.MusicPlayerStatus.format = metadata.format.codec
+      this.MusicPlayerStatus.format = (metadata.format.codec == "MPEG 1 Layer 3") ? "MP3" : metadata.format.codec
+      this.MusicPlayerStatus.device= this.AutoDetectUSB ? "USB" : "FOLDER"
 
       const cover = mm.selectCover(metadata.common.picture);
       if (cover) {
@@ -191,8 +194,10 @@ class PLAYER {
         log("Cover Saved to:", filepath)
         this.MusicPlayerStatus.cover = path.basename(filepath)
       }
-      else log("No Cover Found")
-
+      else {
+        log("No Cover Found")
+        this.MusicPlayerStatus.cover = null
+      }
       var cvlcArgs = ["--no-http-forward-cookies", "--play-and-exit", "--video-title=library @bugsounet/cvlc Music Player"]
       this.Music = new cvlc(cvlcArgs)
       this.Music.play(
@@ -200,12 +205,13 @@ class PLAYER {
         ()=> {
           this.MusicPlayerStatus.connected = true
           log("Start playing:", path.basename(this.MusicPlayerStatus.file))
+          this.Music.cmd("volume " + this.config.maxVolume)
           this.realTimeInfo()
         },
         ()=> {
           log("Music is now ended !")
           clearInterval(this.MusicInterval)
-          if ((this.MusicPlayerStatus.id > this.MusicPlayerStatus.idMax) || this.MusicPlayerStatus.id == null) {
+          if ((this.MusicPlayerStatus.id >= this.MusicPlayerStatus.idMax) || this.MusicPlayerStatus.id == null) {
             this.MusicPlayerStatus.connected = false
             this.send(this.MusicPlayerStatus)
           }
@@ -311,8 +317,13 @@ class PLAYER {
     }
   }
 
+  setSwitch () {
+    this.AutoDetectUSB = !this.AutoDetectUSB
+    this.rebuild()
+  }
+
   rebuild () {
-    log("Rebuild Database")
+    log("Rebuild Database with ", this.AutoDetectUSB ? "USB Key": "Local Folder")
     this.setStop()
     this.init()
     this.start()
