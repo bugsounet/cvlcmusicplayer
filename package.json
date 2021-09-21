@@ -4,6 +4,7 @@
   "description": "node audio player with cvlc",
   "main": "index.js",
   "scripts": {
+    "preinstall": "sudo apt-get install build-essential libudev-dev",
     "postinstall": "electron-rebuild"
   },
   "keywords": [
