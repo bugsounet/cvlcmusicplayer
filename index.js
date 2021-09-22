@@ -317,6 +317,13 @@ class PLAYER {
     }
   }
 
+  setNewMax (volume) {
+    if (volume) {
+      log("Received new Volume Max:" , volume) // keep memoroy this volume for next song !
+      this.config.maxVolume = volume
+    }
+  }
+
   setSwitch () {
     this.AutoDetectUSB = !this.AutoDetectUSB
     this.rebuild()
