@@ -1,10 +1,10 @@
 {
   "name": "@bugsounet/cvlcmusicplayer",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "node audio player with cvlc",
   "main": "index.js",
   "scripts": {
-    "preinstall": "sudo apt-get install build-essential libudev-dev -y",
+    "preinstall": "installer/preinstall.sh",
     "postinstall": "electron-rebuild"
   },
   "keywords": [
