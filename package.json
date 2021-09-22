@@ -4,7 +4,6 @@
   "description": "node audio player with cvlc",
   "main": "index.js",
   "scripts": {
-    "preinstall": "installer/preinstall.sh",
     "postinstall": "electron-rebuild"
   },
   "keywords": [
