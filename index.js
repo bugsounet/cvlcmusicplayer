@@ -1,5 +1,4 @@
 const mm = require('music-metadata')
-var base64Img = require('base64-img')
 const USB = require('usb')
 const Drives = require('drivelist')
 const cvlc = require("@bugsounet/cvlc")
@@ -190,7 +189,7 @@ class PLAYER {
       if (cover) {
         let picture = `data:${cover.format};base64,${cover.data.toString('base64')}`;
         log("Cover Format:", cover.format)
-        var filepath = base64Img.imgSync(picture, this.config.modulePath + "/tmp/Music/", 'cover')
+        var filepath = this.base64ToImg(picture, this.config.modulePath + "/tmp/Music/", 'cover')
         log("Cover Saved to:", filepath)
         this.MusicPlayerStatus.cover = path.basename(filepath)
       }
@@ -334,6 +333,36 @@ class PLAYER {
     this.setStop()
     this.init()
     this.start()
+  }
+
+  /** transform base64 to image **/
+  base64ToImg (data, destpath, name) {
+    var result = this.img(data)
+    var filepath = path.join(destpath, name + result.extname)
+
+    fs.writeFileSync(filepath, result.base64, { encoding: 'base64' })
+    return filepath
+  }
+
+  img(data) {
+    var reg = /^data:image\/([\w+]+);base64,([\s\S]+)/
+    var match = data.match(reg)
+    var baseType = {
+      jpeg: 'jpg'
+    }
+
+    baseType['svg+xml'] = 'svg'
+
+    if (!match) {
+      throw new Error('image base64 data error')
+    }
+
+    var extname = baseType[match[1]] ? baseType[match[1]] : match[1]
+
+    return {
+      extname: '.' + extname,
+      base64: match[2]
+    }
   }
 }
 
