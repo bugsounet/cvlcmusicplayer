@@ -1,3 +1,7 @@
+/** music library **/
+/** 03/10/2021 **/
+/** ©bugsounet <bugsounet@bugsounet.fr> **/
+
 const mm = require('music-metadata')
 const USB = require('usb')
 const Drives = require('drivelist')
@@ -44,6 +48,7 @@ class PLAYER {
     this.Music = null
     this.MusicPlayerStatus = {
       connected: false,
+      pause: false,
       current: 0,
       duration: 0,
       file: null,
@@ -162,6 +167,10 @@ class PLAYER {
 
   /** Music Player **/
   async MusicPlayer () {
+    if (this.Music) {
+      console.log("error already launched")
+      return
+    }
     try {
       const metadata = await mm.parseFile(this.audioList[this.MusicPlayerStatus.id])
 
@@ -205,6 +214,7 @@ class PLAYER {
           this.MusicPlayerStatus.connected = true
           log("Start playing:", path.basename(this.MusicPlayerStatus.file))
           this.Music.cmd("volume " + this.config.maxVolume)
+          this.MusicPlayerStatus.pause = false
           this.realTimeInfo()
         },
         ()=> {
@@ -231,7 +241,7 @@ class PLAYER {
     } catch (error) {
       console.error("[MUSIC] Music Player Error:", error.message)
       clearInterval(this.MusicInterval)
-      if (this.MusicPlayerStatus.id+1 > this.MusicPlayerStatus.idMax) {
+      if ((this.MusicPlayerStatus.id >= this.MusicPlayerStatus.idMax) || this.MusicPlayerStatus.id == null) {
         this.MusicPlayerStatus.connected = false
         this.send(this.MusicPlayerStatus)
       }      
@@ -272,6 +282,8 @@ class PLAYER {
     if (this.Music) {
       this.Music.cmd("pause")
       log("Paused")
+      this.MusicPlayerStatus.pause= !this.MusicPlayerStatus.pause
+      this.sendSocketNotification("Music_Player_PAUSE")
     }
   }
 
@@ -281,29 +293,32 @@ class PLAYER {
       log("Play")
     }
     else this.MusicPlayList()
-    
+    this.MusicPlayerStatus.pause= false
   }
 
-  setStop (EndWithNoCb = false) {
+  setStop () {
     this.forceStop = true
-    if (EndWithNoCb) this.EndWithNoCb = true
     this.destroyPlayer()
     log("Stop")
   }
   
-  setNext () {
+  async setNext () {
     if (this.Music) {
-      this.setStop (true)
-      this.MusicPlayList()
+      this.EndWithNoCb = true 
+      await this.destroyPlayer()
+      this.MusicPlayerStatus.id++
+      if (this.MusicPlayerStatus.id > this.MusicPlayerStatus.idMax) this.MusicPlayerStatus.id = 0
+      this.MusicPlayer()
       log("Next")
     }
   }
 
-  setPrevious () {
+  async setPrevious () {
     if (this.Music) {
+      this.EndWithNoCb = true
+      await this.destroyPlayer()
       this.MusicPlayerStatus.id--
       if (this.MusicPlayerStatus.id < 0) this.MusicPlayerStatus.id = 0
-      this.setStop (true)
       this.MusicPlayer()
       log("Previous")
     }
