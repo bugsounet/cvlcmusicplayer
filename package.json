@@ -1,6 +1,6 @@
 {
   "name": "@bugsounet/cvlcmusicplayer",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "node audio player with cvlc",
   "main": "index.js",
   "scripts": {
