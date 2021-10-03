@@ -1,7 +1,3 @@
-/** music library **/
-/** 03/10/2021 **/
-/** ©bugsounet <bugsounet@bugsounet.fr> **/
-
 const mm = require('music-metadata')
 const USB = require('usb')
 const Drives = require('drivelist')
@@ -292,7 +288,12 @@ class PLAYER {
       this.Music.cmd("play")
       log("Play")
     }
-    else this.MusicPlayList()
+    else {
+      this.MusicPlayerStatus.id--
+      if (this.MusicPlayerStatus.id < 0) this.MusicPlayerStatus.id = 0
+      this.MusicPlayList()
+      log("Play Last Title")
+    }
     this.MusicPlayerStatus.pause= false
   }
 
