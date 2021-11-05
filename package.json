@@ -1,6 +1,6 @@
 {
   "name": "@bugsounet/cvlcmusicplayer",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "node audio player with cvlc",
   "main": "index.js",
   "scripts": {
@@ -24,7 +24,7 @@
   "dependencies": {
     "@bugsounet/cvlc": "^1.0.5",
     "drivelist": "^9.2.4",
-    "electron-rebuild": "^3.2.3",
+    "electron-rebuild": "2.1.1",
     "music-metadata": "^7.11.4",
     "usb": "1.7.2"
   }
