@@ -1,10 +1,10 @@
 {
   "name": "@bugsounet/cvlcmusicplayer",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "description": "node audio player with cvlc",
   "main": "index.js",
   "scripts": {
-    "postinstall": "electron-rebuild"
+    "postinstall": "MagicMirror-rebuild"
   },
   "keywords": [
     "audio",
