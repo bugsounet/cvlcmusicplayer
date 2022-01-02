@@ -1,11 +1,8 @@
 {
   "name": "@bugsounet/cvlcmusicplayer",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "node audio player with cvlc",
   "main": "index.js",
-  "scripts": {
-    "postinstall": "MagicMirror-rebuild"
-  },
   "keywords": [
     "audio",
     "node",
@@ -24,7 +21,6 @@
   "dependencies": {
     "@bugsounet/cvlc": "^1.0.5",
     "drivelist": "^9.2.4",
-    "magicmirror-rebuild": "^1.0.3",
     "music-metadata": "^7.11.4",
     "usb": "1.7.2"
   }
