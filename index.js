@@ -69,7 +69,7 @@ class PLAYER {
     else await this.search(this.config.musicPath)
     if (this.audioList.length) {
       console.log("[MUSIC] Audio files Found:", this.audioList.length)
-      if (this.config.autoStart) this.MusicPlayList()
+      if (this.config.autoStart && this.AutoDetectUSB) this.MusicPlayList()
     } else console.log("[MUSIC] No Audio files Found!")
   }
 
